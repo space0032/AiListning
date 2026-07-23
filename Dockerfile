@@ -1,11 +1,9 @@
 FROM eclipse-temurin:21-jre AS runtime-base
 
-ARG JAVA_VERSION=26
-
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/* && \
-    curl -sL https://download.java.net/java/GA/jdk${JAVA_VERSION}.1/865c1da2e1e24da3b1e59b7a9da48c61/36/GPL/openjdk-${JAVA_VERSION}_linux-x64_bin.tar.gz \
+    curl -sL "https://github.com/adoptium/temurin26-binaries/releases/download/jdk-26.0.1%2B8/OpenJDK26U-jdk_x64_linux_hotspot_26.0.1_8.tar.gz" \
     | tar -xzC /opt && \
-    ln -s /opt/jdk-${JAVA_VERSION} /opt/java
+    ln -s /opt/jdk-26.0.1+8 /opt/java
 
 ENV JAVA_HOME=/opt/java
 ENV PATH="${JAVA_HOME}/bin:${PATH}"

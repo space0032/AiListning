@@ -7,11 +7,11 @@ RUN apt-get update && apt-get install -y \
     git sudo \
     && rm -rf /var/lib/apt/lists/*
 
-# Java 26
-RUN wget -qO- https://download.java.net/java/GA/jdk26.1/865c1da2e1e24da3b1e59b7a9da48c61/36/GPL/openjdk-26_linux-x64_bin.tar.gz \
-    | tar -xzC /opt \
-    && ln -s /opt/jdk-26 /opt/java \
-    && rm -rf /tmp/*
+# Java 26 (Eclipse Temurin)
+RUN wget -qO /tmp/jdk26.tar.gz "https://github.com/adoptium/temurin26-binaries/releases/download/jdk-26.0.1%2B8/OpenJDK26U-jdk_x64_linux_hotspot_26.0.1_8.tar.gz" \
+    && tar -xzf /tmp/jdk26.tar.gz -C /opt \
+    && ln -s /opt/jdk-26.0.1+8 /opt/java \
+    && rm /tmp/jdk26.tar.gz
 
 ENV JAVA_HOME=/opt/java
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
