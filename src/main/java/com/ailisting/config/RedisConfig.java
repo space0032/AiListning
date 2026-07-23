@@ -59,19 +59,19 @@ public class RedisConfig {
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig)
                 // User profile cache: 2 hours (changes rarely)
-                .withCacheConfiguration("users", RedisCacheConfiguration.defaultCacheConfig()
+                .withCacheConfiguration("users", defaultConfig
                         .entryTtl(Duration.ofHours(2)))
                 // Listing cache: 15 minutes (changes moderately)
-                .withCacheConfiguration("listings", RedisCacheConfiguration.defaultCacheConfig()
+                .withCacheConfiguration("listings", defaultConfig
                         .entryTtl(Duration.ofMinutes(15)))
                 // User listings list cache: 10 minutes (changes on every create/update)
-                .withCacheConfiguration("userListings", RedisCacheConfiguration.defaultCacheConfig()
+                .withCacheConfiguration("userListings", defaultConfig
                         .entryTtl(Duration.ofMinutes(10)))
                 // AI health check cache: 5 minutes (external service)
-                .withCacheConfiguration("aiHealth", RedisCacheConfiguration.defaultCacheConfig()
+                .withCacheConfiguration("aiHealth", defaultConfig
                         .entryTtl(Duration.ofMinutes(5)))
                 // Listing stats cache: 5 minutes
-                .withCacheConfiguration("listingStats", RedisCacheConfiguration.defaultCacheConfig()
+                .withCacheConfiguration("listingStats", defaultConfig
                         .entryTtl(Duration.ofMinutes(5)))
                 .build();
     }
