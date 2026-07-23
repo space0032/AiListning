@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -39,7 +39,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(RateLimitFilter.class);
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final StringRedisTemplate redisTemplate;
     private final DefaultRedisScript<Long> rateLimitScript;
 
     @Value("${app.rate-limit.public:30}")
@@ -128,9 +128,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private void addRateLimitHeaders(HttpServletResponse response, int limit, String key) {
-        // Get current count for headers
-        Object count = redisTemplate.opsForValue().get(key);
-        int remaining = count != null ? Math.max(0, limit - (int) count) : limit;
+        String count = redisTemplate.opsForValue().get(key);
+        int remaining = count != null ? Math.max(0, limit - Integer.parseInt(count)) : limit;
 
         response.setHeader("X-RateLimit-Limit", String.valueOf(limit));
         response.setHeader("X-RateLimit-Remaining", String.valueOf(remaining));
