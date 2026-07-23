@@ -3,7 +3,6 @@ package com.ailisting.config;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -27,25 +26,23 @@ public class MinioConfig {
 
     @Bean
     public MinioClient minioClient() {
-        return MinioClient.builder()
+        MinioClient client = MinioClient.builder()
                 .endpoint(endpoint)
                 .credentials(accessKey, secretKey)
                 .build();
-    }
 
-    @PostConstruct
-    public void initBucket() {
         try {
-            MinioClient client = minioClient();
             boolean exists = client.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
             if (!exists) {
                 client.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
-                log.info("Created bucket: {}", bucketName);
+                log.info("Created MinIO bucket: {}", bucketName);
             } else {
-                log.info("Bucket already exists: {}", bucketName);
+                log.info("MinIO bucket already exists: {}", bucketName);
             }
         } catch (Exception e) {
             log.warn("Could not initialize MinIO bucket: {}", e.getMessage());
         }
+
+        return client;
     }
 }
