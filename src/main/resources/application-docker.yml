@@ -49,6 +49,7 @@ app:
     access-key: minioadmin
     secret-key: minioadmin
     bucket-name: ai-listing-images
+    public-url: /storage
 
   email:
     from: noreply@ailisting.com

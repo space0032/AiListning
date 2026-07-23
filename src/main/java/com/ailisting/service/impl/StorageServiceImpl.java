@@ -24,8 +24,8 @@ public class StorageServiceImpl implements StorageService {
     @Value("${app.minio.bucket-name}")
     private String bucketName;
 
-    @Value("${app.minio.endpoint}")
-    private String endpoint;
+    @Value("${app.minio.public-url:${app.minio.endpoint}}")
+    private String publicUrl;
 
     @Override
     public String uploadFile(MultipartFile file) {
@@ -44,7 +44,7 @@ public class StorageServiceImpl implements StorageService {
                             .contentType(file.getContentType())
                             .build());
 
-            String fileUrl = endpoint + "/" + bucketName + "/" + fileName;
+            String fileUrl = publicUrl + "/" + bucketName + "/" + fileName;
             log.info("File uploaded successfully: {}", fileName);
 
             return fileUrl;
@@ -73,7 +73,7 @@ public class StorageServiceImpl implements StorageService {
 
     @Override
     public String getFileUrl(String fileName) {
-        return endpoint + "/" + bucketName + "/" + fileName;
+        return publicUrl + "/" + bucketName + "/" + fileName;
     }
 
     private void validateFile(MultipartFile file) {
