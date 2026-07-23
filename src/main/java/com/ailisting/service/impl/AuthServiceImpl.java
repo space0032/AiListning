@@ -18,6 +18,7 @@ import com.ailisting.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -43,6 +44,9 @@ public class AuthServiceImpl implements AuthService {
     private final JwtTokenProvider tokenProvider;
     private final EmailService emailService;
 
+    @Value("${spring.mail.username:}")
+    private String mailUsername;
+
     @Override
     @Transactional
     @CacheEvict(value = {"users", "userListings", "listingStats"}, allEntries = true)
@@ -55,6 +59,8 @@ public class AuthServiceImpl implements AuthService {
             throw new BadRequestException("Email is already in use");
         }
 
+        boolean mailConfigured = mailUsername != null && !mailUsername.isBlank();
+
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail().toLowerCase().trim())
@@ -62,15 +68,19 @@ public class AuthServiceImpl implements AuthService {
                 .fullName(request.getFullName())
                 .role(Role.ROLE_USER)
                 .enabled(true)
-                .emailVerified(false)
-                .verificationToken(UUID.randomUUID().toString())
+                .emailVerified(!mailConfigured)
+                .verificationToken(mailConfigured ? UUID.randomUUID().toString() : null)
                 .build();
 
         user = userRepository.save(user);
-        log.info("User registered successfully: {}", user.getUsername());
+        log.info("User registered successfully: {} (emailVerified={})", user.getUsername(), user.isEmailVerified());
 
-        emailService.sendEmailVerification(user.getEmail(), user.getVerificationToken());
-        emailService.sendWelcomeEmail(user.getEmail(), user.getFullName());
+        if (mailConfigured) {
+            emailService.sendEmailVerification(user.getEmail(), user.getVerificationToken());
+            emailService.sendWelcomeEmail(user.getEmail(), user.getFullName());
+        } else {
+            log.info("Mail not configured, skipping verification emails for user: {}", user.getUsername());
+        }
 
         return generateAuthResponse(user);
     }
