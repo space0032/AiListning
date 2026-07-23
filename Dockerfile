@@ -10,8 +10,6 @@ RUN curl -sL "https://github.com/adoptium/temurin26-binaries/releases/download/j
     | tar -xzC /opt && \
     mv /opt/jdk-26.0.1+8 /opt/java
 
-RUN java -version
-
 FROM runtime-base AS builder
 
 WORKDIR /build
@@ -19,17 +17,13 @@ COPY pom.xml .
 RUN mvn dependency:go-offline -q 2>/dev/null || true
 
 COPY src ./src
-RUN mvn clean package -DskipTests -q
+RUN mvn clean package -DskipTests -Djava.version=21
 
-FROM runtime-base
+FROM eclipse-temurin:21-jre
 
-RUN useradd -r -s /bin/false appuser
 WORKDIR /app
 
 COPY --from=builder /build/target/*.jar app.jar
-
-RUN chown -R appuser:appuser /app
-USER appuser
 
 EXPOSE 8080
 
