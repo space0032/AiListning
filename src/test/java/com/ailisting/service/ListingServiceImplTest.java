@@ -309,12 +309,12 @@ class ListingServiceImplTest {
                 .platform(Platform.AMAZON)
                 .build();
 
-        when(aiGenerationService.generateListing(any(), eq(1L))).thenReturn(aiResponse);
+        when(aiGenerationService.generateListing(any(), eq(1L), eq(1L))).thenReturn(aiResponse);
         when(listingRepository.save(any(Listing.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         ListingResponse result = listingServiceImpl.generateListingContent(1L, 1L);
 
         assertNotNull(result);
-        verify(aiGenerationService).generateListing(any(), eq(1L));
+        verify(aiGenerationService).generateListing(any(), eq(1L), eq(1L));
     }
 }

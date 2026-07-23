@@ -37,4 +37,26 @@ public interface AiGenerationLogRepository extends JpaRepository<AiGenerationLog
 
     @Query("SELECT l.modelUsed, COUNT(l) FROM AiGenerationLog l WHERE l.user.id = :userId GROUP BY l.modelUsed")
     List<Object[]> countByModelForUser(@Param("userId") Long userId);
+
+    // ===========================
+    // Global queries (admin)
+    // ===========================
+
+    @Query("SELECT COUNT(l) FROM AiGenerationLog l WHERE l.createdAt >= :since")
+    long countAllSince(@Param("since") LocalDateTime since);
+
+    @Query("SELECT COUNT(l) FROM AiGenerationLog l WHERE l.status = 'SUCCESS' AND l.createdAt >= :since")
+    long countSuccessfulAllSince(@Param("since") LocalDateTime since);
+
+    @Query("SELECT COALESCE(SUM(l.totalTokens), 0) FROM AiGenerationLog l WHERE l.createdAt >= :since")
+    long sumTokensAllSince(@Param("since") LocalDateTime since);
+
+    @Query("SELECT COALESCE(AVG(l.generationTimeMs), 0) FROM AiGenerationLog l WHERE l.status = 'SUCCESS'")
+    double avgGenerationTimeAll();
+
+    @Query("SELECT l.platform, COUNT(l) FROM AiGenerationLog l WHERE l.platform IS NOT NULL GROUP BY l.platform")
+    List<Object[]> countByPlatformAll();
+
+    @Query("SELECT FUNCTION('DATE', l.createdAt) as day, COUNT(l) FROM AiGenerationLog l WHERE l.createdAt >= :since GROUP BY FUNCTION('DATE', l.createdAt) ORDER BY day")
+    List<Object[]> countByDaySince(@Param("since") LocalDateTime since);
 }

@@ -92,6 +92,10 @@ public class AuthServiceImpl implements AuthService {
             throw new BadRequestException("Account is disabled");
         }
 
+        if (!user.isEmailVerified()) {
+            throw new BadRequestException("Please verify your email before logging in");
+        }
+
         log.info("User logged in successfully: {}", user.getUsername());
 
         return generateAuthResponse(user);
@@ -140,6 +144,7 @@ public class AuthServiceImpl implements AuthService {
         userRepository.findByEmail(email.toLowerCase().trim())
                 .ifPresent(user -> {
                     user.setResetPasswordToken(UUID.randomUUID().toString());
+                    user.setResetPasswordTokenExpiry(LocalDateTime.now().plusHours(1));
                     userRepository.save(user);
                     emailService.sendPasswordResetEmail(user.getEmail(), user.getResetPasswordToken());
                     log.info("Password reset email sent for user: {}", user.getUsername());
@@ -153,8 +158,13 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByResetPasswordToken(request.getToken())
                 .orElseThrow(() -> new BadRequestException("Invalid or expired reset token"));
 
+        if (user.getResetPasswordTokenExpiry() != null && user.getResetPasswordTokenExpiry().isBefore(LocalDateTime.now())) {
+            throw new BadRequestException("Reset token has expired. Please request a new one.");
+        }
+
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         user.setResetPasswordToken(null);
+        user.setResetPasswordTokenExpiry(null);
         userRepository.save(user);
 
         // Revoke all existing refresh tokens on password reset

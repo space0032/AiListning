@@ -21,6 +21,8 @@ export interface Listing {
   metaDescription: string | null;
   platformFormattedListing: string | null;
   status: ListingStatus;
+  modelUsed: string | null;
+  generationTimeMs: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -51,5 +53,4 @@ export interface ListingStats {
   draftCount: number;
   publishedCount: number;
   archivedCount: number;
-  platformStats: Record<Platform, number>;
 }

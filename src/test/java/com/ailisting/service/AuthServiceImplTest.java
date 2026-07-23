@@ -50,6 +50,9 @@ class AuthServiceImplTest {
     @Mock
     private JwtTokenProvider tokenProvider;
 
+    @Mock
+    private EmailService emailService;
+
     @InjectMocks
     private AuthServiceImpl authServiceImpl;
 
@@ -248,11 +251,12 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void forgotPassword_NonExistentEmail_ThrowsBadRequest() {
+    void forgotPassword_NonExistentEmail_DoesNotThrow() {
         when(userRepository.findByEmail("nonexistent@example.com"))
                 .thenReturn(Optional.empty());
 
-        assertThrows(BadRequestException.class, () -> authServiceImpl.forgotPassword("nonexistent@example.com"));
+        assertDoesNotThrow(() -> authServiceImpl.forgotPassword("nonexistent@example.com"));
+        verify(userRepository, never()).save(any());
     }
 
     @Test

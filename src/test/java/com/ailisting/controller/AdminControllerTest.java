@@ -108,27 +108,35 @@ class AdminControllerTest {
     void getAnalyticsOverview_Admin_ReturnsOk() throws Exception {
         when(userRepository.count()).thenReturn(10L);
         when(listingRepository.count()).thenReturn(50L);
-        when(generationLogRepository.countByUserIdSince(anyLong(), any(LocalDateTime.class)))
-                .thenReturn(5L);
-        when(generationLogRepository.sumTokensByUserIdSince(anyLong(), any(LocalDateTime.class)))
-                .thenReturn(1000L);
+        when(userRepository.countByEnabledTrue()).thenReturn(8L);
+        when(generationLogRepository.countAllSince(any(LocalDateTime.class)))
+                .thenReturn(100L);
 
         mockMvc.perform(get("/admin/analytics/overview"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.totalUsers").value(10));
+                .andExpect(jsonPath("$.data.totalUsers").value(10))
+                .andExpect(jsonPath("$.data.activeUsers").value(8))
+                .andExpect(jsonPath("$.data.aiGenerations").value(100));
     }
 
     @Test
     void getGenerationStats_Admin_ReturnsOk() throws Exception {
-        when(generationLogRepository.countByUserIdSince(anyLong(), any(LocalDateTime.class)))
+        when(generationLogRepository.countAllSince(any(LocalDateTime.class)))
                 .thenReturn(10L);
-        when(generationLogRepository.countSuccessfulByUserIdSince(anyLong(), any(LocalDateTime.class)))
+        when(generationLogRepository.countSuccessfulAllSince(any(LocalDateTime.class)))
                 .thenReturn(8L);
+        when(generationLogRepository.avgGenerationTimeAll())
+                .thenReturn(1500.0);
+        when(generationLogRepository.countByPlatformAll())
+                .thenReturn(List.of());
+        when(generationLogRepository.countByDaySince(any(LocalDateTime.class)))
+                .thenReturn(List.of());
 
         mockMvc.perform(get("/admin/analytics/generation-stats"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.totalGenerations").value(10));
     }
 
     @Test

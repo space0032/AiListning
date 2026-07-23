@@ -31,6 +31,12 @@ public class AiGenerationServiceImpl implements AiGenerationService {
     @Override
     @Transactional
     public ListingGenerationResponse generateListing(ListingGenerationRequest request, Long userId) {
+        return generateListing(request, userId, null);
+    }
+
+    @Override
+    @Transactional
+    public ListingGenerationResponse generateListing(ListingGenerationRequest request, Long userId, Long listingId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BadRequestException("User not found"));
 
@@ -57,7 +63,7 @@ public class AiGenerationServiceImpl implements AiGenerationService {
             jsonResponse = provider.generateJson(prompt, null);
         } catch (AiProviderException e) {
             log.error("AI generation failed for user {}: {}", userId, e.getMessage());
-            saveLog(user, null, modelUsed, request.getPlatform(),
+            saveLog(user, listingId, modelUsed, request.getPlatform(),
                     System.currentTimeMillis() - startTime, "FAILED", e.getMessage());
             throw new BadRequestException("AI generation failed: " + e.getMessage());
         }
@@ -71,7 +77,7 @@ public class AiGenerationServiceImpl implements AiGenerationService {
         response.setGenerationTimeMs(generationTimeMs);
 
         // Log the generation
-        saveLog(user, null, modelUsed, request.getPlatform(), generationTimeMs, "SUCCESS", null);
+        saveLog(user, listingId, modelUsed, request.getPlatform(), generationTimeMs, "SUCCESS", null);
 
         return response;
     }
@@ -118,19 +124,19 @@ public class AiGenerationServiceImpl implements AiGenerationService {
         return node != null && !node.isNull() ? node.asText() : null;
     }
 
-    private void saveLog(User user, Listing listing, String modelUsed, Platform platform,
+    private void saveLog(User user, Long listingId, String modelUsed, Platform platform,
                          long generationTimeMs, String status, String errorMessage) {
         try {
-            AiGenerationLog log = AiGenerationLog.builder()
+            AiGenerationLog logEntry = AiGenerationLog.builder()
                     .user(user)
-                    .listing(listing)
+                    .listing(listingId != null ? com.ailisting.model.entity.Listing.builder().id(listingId).build() : null)
                     .modelUsed(modelUsed)
                     .platform(platform)
                     .generationTimeMs(generationTimeMs)
                     .status(AiGenerationLog.GenerationStatus.valueOf(status))
                     .errorMessage(errorMessage)
                     .build();
-            generationLogRepository.save(log);
+            generationLogRepository.save(logEntry);
         } catch (Exception e) {
             log.warn("Failed to save generation log: {}", e.getMessage());
         }

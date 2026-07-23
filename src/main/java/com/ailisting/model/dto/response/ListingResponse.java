@@ -34,6 +34,8 @@ public class ListingResponse {
     private String metaDescription;
     private String platformFormattedListing;
     private Listing.ListingStatus status;
+    private String modelUsed;
+    private Long generationTimeMs;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

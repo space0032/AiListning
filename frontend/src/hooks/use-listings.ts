@@ -123,3 +123,19 @@ export function useListingStats() {
     staleTime: 5 * 60 * 1000,
   });
 }
+
+export function useListingAiGeneration(id: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => listingsApi.generateAi(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listing', id] });
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
+      toast.success('AI content generated and saved');
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'Failed to generate content');
+    },
+  });
+}

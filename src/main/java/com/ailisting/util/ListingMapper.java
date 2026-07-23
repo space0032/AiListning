@@ -41,6 +41,8 @@ public final class ListingMapper {
                 .metaDescription(listing.getMetaDescription())
                 .platformFormattedListing(listing.getPlatformFormattedListing())
                 .status(listing.getStatus())
+                .modelUsed(listing.getModelUsed())
+                .generationTimeMs(listing.getGenerationTimeMs())
                 .createdAt(listing.getCreatedAt())
                 .updatedAt(listing.getUpdatedAt())
                 .build();

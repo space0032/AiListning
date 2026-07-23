@@ -290,7 +290,7 @@ public class ListingServiceImpl implements ListingService {
                 .platform(listing.getPlatform())
                 .build();
 
-        ListingGenerationResponse aiResponse = aiGenerationService.generateListing(request, userId);
+        ListingGenerationResponse aiResponse = aiGenerationService.generateListing(request, userId, id);
 
         listing.setSeoTitle(aiResponse.getSeoTitle());
         listing.setBulletPoints(aiResponse.getBulletPoints());
@@ -299,6 +299,8 @@ public class ListingServiceImpl implements ListingService {
         listing.setKeywords(aiResponse.getKeywords());
         listing.setMetaDescription(aiResponse.getMetaDescription());
         listing.setPlatformFormattedListing(aiResponse.getPlatformFormattedListing());
+        listing.setModelUsed(aiResponse.getModelUsed());
+        listing.setGenerationTimeMs(aiResponse.getGenerationTimeMs());
 
         listing = listingRepository.save(listing);
         log.info("AI content applied to listing: id={}, model={}, time={}ms",

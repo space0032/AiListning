@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useListing, useAiGeneration } from '@/hooks';
+import { useListing, useListingAiGeneration } from '@/hooks';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/atoms/loading-spinner';
@@ -12,22 +12,11 @@ export default function GenerateListingPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: listing, isLoading: listingLoading } = useListing(Number(id));
-  const generateMutation = useAiGeneration();
+  const generateMutation = useListingAiGeneration(Number(id));
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const handleGenerate = () => {
-    if (!listing) return;
-
-    generateMutation.mutate({
-      productName: listing.productName,
-      productDescription: listing.productDescription || undefined,
-      category: listing.category || undefined,
-      brand: listing.brand || undefined,
-      material: listing.material || undefined,
-      color: listing.color || undefined,
-      size: listing.size || undefined,
-      platform: listing.platform,
-    });
+    generateMutation.mutate();
   };
 
   const copyToClipboard = (text: string, field: string) => {
@@ -37,7 +26,7 @@ export default function GenerateListingPage() {
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  const generatedData = generateMutation.data?.data;
+  const hasGeneratedContent = listing?.seoTitle != null;
 
   if (listingLoading) {
     return <LoadingSpinner className="py-24" />;
@@ -92,7 +81,7 @@ export default function GenerateListingPage() {
       </Card>
 
       {/* Generate Button */}
-      {!generatedData && (
+      {!hasGeneratedContent && (
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-8">
@@ -124,7 +113,7 @@ export default function GenerateListingPage() {
       )}
 
       {/* Generated Content */}
-      {generatedData && (
+      {hasGeneratedContent && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Generated Content</h2>
@@ -138,66 +127,39 @@ export default function GenerateListingPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>SEO Title</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(generatedData.seoTitle, 'seoTitle')}
-                >
-                  {copiedField === 'seoTitle' ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
+                <Button variant="ghost" size="sm"
+                  onClick={() => copyToClipboard(listing.seoTitle!, 'seoTitle')}>
+                  {copiedField === 'seoTitle' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
-              <p>{generatedData.seoTitle}</p>
-            </CardContent>
+            <CardContent><p>{listing.seoTitle}</p></CardContent>
           </Card>
 
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Bullet Points</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(generatedData.bulletPoints, 'bulletPoints')}
-                >
-                  {copiedField === 'bulletPoints' ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
+                <Button variant="ghost" size="sm"
+                  onClick={() => copyToClipboard(listing.bulletPoints!, 'bulletPoints')}>
+                  {copiedField === 'bulletPoints' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
-              <p className="whitespace-pre-line">{generatedData.bulletPoints}</p>
-            </CardContent>
+            <CardContent><p className="whitespace-pre-line">{listing.bulletPoints}</p></CardContent>
           </Card>
 
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Description</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(generatedData.description, 'description')}
-                >
-                  {copiedField === 'description' ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
+                <Button variant="ghost" size="sm"
+                  onClick={() => copyToClipboard(listing.description!, 'description')}>
+                  {copiedField === 'description' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
-              <p className="whitespace-pre-line">{generatedData.description}</p>
-            </CardContent>
+            <CardContent><p className="whitespace-pre-line">{listing.description}</p></CardContent>
           </Card>
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -205,44 +167,26 @@ export default function GenerateListingPage() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Tags</CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(generatedData.tags, 'tags')}
-                  >
-                    {copiedField === 'tags' ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
+                  <Button variant="ghost" size="sm"
+                    onClick={() => copyToClipboard(listing.tags!, 'tags')}>
+                    {copiedField === 'tags' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent>
-                <p>{generatedData.tags}</p>
-              </CardContent>
+              <CardContent><p>{listing.tags}</p></CardContent>
             </Card>
 
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Keywords</CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(generatedData.keywords, 'keywords')}
-                  >
-                    {copiedField === 'keywords' ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
+                  <Button variant="ghost" size="sm"
+                    onClick={() => copyToClipboard(listing.keywords!, 'keywords')}>
+                    {copiedField === 'keywords' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent>
-                <p>{generatedData.keywords}</p>
-              </CardContent>
+              <CardContent><p>{listing.keywords}</p></CardContent>
             </Card>
           </div>
 
@@ -250,27 +194,20 @@ export default function GenerateListingPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Meta Description</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(generatedData.metaDescription, 'metaDescription')}
-                >
-                  {copiedField === 'metaDescription' ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
+                <Button variant="ghost" size="sm"
+                  onClick={() => copyToClipboard(listing.metaDescription!, 'metaDescription')}>
+                  {copiedField === 'metaDescription' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
-              <p>{generatedData.metaDescription}</p>
-            </CardContent>
+            <CardContent><p>{listing.metaDescription}</p></CardContent>
           </Card>
 
-          <div className="text-sm text-muted-foreground text-center">
-            Generated using {generatedData.modelUsed} in {generatedData.generationTimeMs}ms
-          </div>
+          {listing.modelUsed && (
+            <div className="text-sm text-muted-foreground text-center">
+              Generated using {listing.modelUsed} in {listing.generationTimeMs}ms
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -19,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -92,49 +93,57 @@ public class AdminController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAnalyticsOverview() {
         long totalUsers = userRepository.count();
         long totalListings = listingRepository.count();
-
-        LocalDateTime last24h = LocalDateTime.now().minusHours(24);
-        LocalDateTime last7d = LocalDateTime.now().minusDays(7);
-        LocalDateTime last30d = LocalDateTime.now().minusDays(30);
-
-        long generationsLast24h = generationLogRepository.countByUserIdSince(0L, last24h);
-        long generationsLast7d = generationLogRepository.countByUserIdSince(0L, last7d);
-        long generationsLast30d = generationLogRepository.countByUserIdSince(0L, last30d);
-
-        long tokensUsed = generationLogRepository.sumTokensByUserIdSince(0L, last30d);
+        long activeUsers = userRepository.countByEnabledTrue();
+        long aiGenerations = generationLogRepository.countAllSince(LocalDateTime.of(2000, 1, 1, 0, 0));
 
         return ResponseEntity.ok(ApiResponse.success("Analytics retrieved", Map.of(
                 "totalUsers", totalUsers,
                 "totalListings", totalListings,
-                "generationsLast24h", generationsLast24h,
-                "generationsLast7d", generationsLast7d,
-                "generationsLast30d", generationsLast30d,
-                "tokensUsedLast30d", tokensUsed
+                "activeUsers", activeUsers,
+                "aiGenerations", aiGenerations
         )));
     }
 
     @GetMapping("/analytics/generation-stats")
     @Operation(summary = "Get AI generation stats")
-    public ResponseEntity<ApiResponse<Object>> getGenerationStats() {
-        LocalDateTime last7d = LocalDateTime.now().minusDays(7);
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getGenerationStats() {
+        LocalDateTime allTime = LocalDateTime.of(2000, 1, 1, 0, 0);
+
+        long totalGenerations = generationLogRepository.countAllSince(allTime);
+        long successfulGenerations = generationLogRepository.countSuccessfulAllSince(allTime);
+        double successRate = totalGenerations > 0
+                ? (double) successfulGenerations / totalGenerations
+                : 0;
+        double avgGenerationTimeMs = generationLogRepository.avgGenerationTimeAll();
+
+        // Generations by platform
+        Map<String, Long> generationsByPlatform = new java.util.HashMap<>();
+        List<Object[]> platformCounts = generationLogRepository.countByPlatformAll();
+        for (Object[] row : platformCounts) {
+            String platform = row[0] != null ? row[0].toString() : "UNKNOWN";
+            Long count = (Long) row[1];
+            generationsByPlatform.put(platform, count);
+        }
+
+        // Generations by day (last 30 days)
         LocalDateTime last30d = LocalDateTime.now().minusDays(30);
+        List<Map<String, Object>> generationsByDay = new java.util.ArrayList<>();
+        List<Object[]> dailyCounts = generationLogRepository.countByDaySince(last30d);
+        for (Object[] row : dailyCounts) {
+            Map<String, Object> entry = new java.util.HashMap<>();
+            entry.put("date", row[0] != null ? row[0].toString() : "unknown");
+            entry.put("count", row[1] != null ? row[1] : 0);
+            generationsByDay.add(entry);
+        }
 
-        long successLast7d = generationLogRepository.countSuccessfulByUserIdSince(0L, last7d);
-        long successLast30d = generationLogRepository.countSuccessfulByUserIdSince(0L, last30d);
-        long totalLast7d = generationLogRepository.countByUserIdSince(0L, last7d);
-        long totalLast30d = generationLogRepository.countByUserIdSince(0L, last30d);
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("totalGenerations", totalGenerations);
+        result.put("successRate", successRate);
+        result.put("avgGenerationTimeMs", Math.round(avgGenerationTimeMs));
+        result.put("generationsByPlatform", generationsByPlatform);
+        result.put("generationsByDay", generationsByDay);
 
-        double successRate7d = totalLast7d > 0 ? (double) successLast7d / totalLast7d * 100 : 0;
-        double successRate30d = totalLast30d > 0 ? (double) successLast30d / totalLast30d * 100 : 0;
-
-        return ResponseEntity.ok(ApiResponse.success("Generation stats retrieved", new Object() {
-            public final long totalGenerations7d = totalLast7d;
-            public final long successfulGenerations7d = successLast7d;
-            public final double successRate7dPercent = Math.round(successRate7d * 100.0) / 100.0;
-            public final long totalGenerations30d = totalLast30d;
-            public final long successfulGenerations30d = successLast30d;
-            public final double successRate30dPercent = Math.round(successRate30d * 100.0) / 100.0;
-        }));
+        return ResponseEntity.ok(ApiResponse.success("Generation stats retrieved", result));
     }
 
     // ===========================

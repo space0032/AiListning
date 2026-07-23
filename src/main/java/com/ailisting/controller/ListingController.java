@@ -231,9 +231,9 @@ public class ListingController {
 
         return ResponseEntity.ok(ApiResponse.success("Stats retrieved", new Object() {
             public final long totalListings = total;
-            public final long draftListings = drafts;
-            public final long publishedListings = published;
-            public final long archivedListings = archived;
+            public final long draftCount = drafts;
+            public final long publishedCount = published;
+            public final long archivedCount = archived;
         }));
     }
 

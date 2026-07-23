@@ -94,6 +94,12 @@ public class Listing {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Transient
+    private String modelUsed;
+
+    @Transient
+    private Long generationTimeMs;
+
     public enum ListingStatus {
         DRAFT, PUBLISHED, ARCHIVED
     }

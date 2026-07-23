@@ -1,6 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
+import { useDropzone } from 'react-dropzone';
+import { useCallback, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,12 +16,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { listingSchema, type ListingInput } from '@/lib/validations';
-import { useCreateListing } from '@/hooks';
-import { ArrowLeft, Save } from 'lucide-react';
+import { useCreateListing, useUploadImage } from '@/hooks';
+import { ArrowLeft, Save, Image as ImageIcon, X } from 'lucide-react';
 
 export default function CreateListingPage() {
   const navigate = useNavigate();
   const createMutation = useCreateListing();
+  const uploadImageMutation = useUploadImage();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const {
     register,
@@ -36,13 +41,53 @@ export default function CreateListingPage() {
 
   const platform = watch('platform');
 
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    if (file) {
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'],
+    },
+    maxFiles: 1,
+    maxSize: 5 * 1024 * 1024,
+  });
+
+  const removeFile = () => {
+    setSelectedFile(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl(null);
+  };
+
   const onSubmit = (data: ListingInput) => {
     createMutation.mutate(data, {
       onSuccess: (response) => {
-        navigate(`/listings/${response.data.id}`);
+        const listingId = response.data.id;
+
+        if (selectedFile) {
+          uploadImageMutation.mutate(
+            { id: listingId, file: selectedFile },
+            {
+              onSuccess: () => navigate(`/listings/${listingId}`),
+              onError: () => navigate(`/listings/${listingId}`),
+            }
+          );
+        } else {
+          navigate(`/listings/${listingId}`);
+        }
       },
     });
   };
+
+  const isSubmitting = createMutation.isPending || uploadImageMutation.isPending;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -165,13 +210,59 @@ export default function CreateListingPage() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle>Product Image</CardTitle>
+            <CardDescription>
+              Upload an image of your product (optional)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {previewUrl ? (
+              <div className="relative">
+                <img
+                  src={previewUrl}
+                  alt="Preview"
+                  className="w-full h-48 object-cover rounded-lg"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2"
+                  onClick={removeFile}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+                <p className="text-sm text-muted-foreground mt-2">{selectedFile?.name}</p>
+              </div>
+            ) : (
+              <div
+                {...getRootProps()}
+                className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                  isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
+                }`}
+              >
+                <input {...getInputProps()} />
+                <ImageIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">
+                  {isDragActive ? 'Drop the image here' : 'Drag & drop an image here, or click to select'}
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  JPEG, PNG, GIF, WebP (max 5MB)
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <div className="flex gap-4">
           <Button type="button" variant="outline" onClick={() => navigate(-1)}>
             Cancel
           </Button>
-          <Button type="submit" disabled={createMutation.isPending}>
+          <Button type="submit" disabled={isSubmitting}>
             <Save className="mr-2 h-4 w-4" />
-            {createMutation.isPending ? 'Creating...' : 'Create Listing'}
+            {isSubmitting ? 'Creating...' : 'Create Listing'}
           </Button>
         </div>
       </form>
