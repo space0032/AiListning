@@ -16,6 +16,11 @@ spring:
     password: ${MAIL_PASSWORD:}
 
 app:
+  jwt:
+    secret: ${APP_JWT_SECRET:docker-dev-secret-key-change-in-production-please-make-it-long-enough-32ch}
+    access-token-expiration: 900000
+    refresh-token-expiration: 604800000
+
   ollama:
     base-url: http://ollama:11434
     model: qwen3.5:0.8b
@@ -30,3 +35,9 @@ app:
   email:
     from: noreply@ailisting.com
     frontend-url: ${FRONTEND_URL:http://localhost:3000}
+
+  rate-limit:
+    public: 30
+    authenticated: 60
+    ai-generation: 10
+    window-seconds: 60
