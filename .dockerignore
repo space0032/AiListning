@@ -1,0 +1,12 @@
+node_modules
+frontend/node_modules
+target
+build
+.git
+.github
+*.log
+logs/
+.idea
+*.iml
+.vscode
+node
