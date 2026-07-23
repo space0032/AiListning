@@ -87,6 +87,7 @@ services:
       SPRING_DATA_REDIS_PORT: 6379
       APP_OLLAMA_BASE_URL: http://ollama:11434
       APP_MINIO_ENDPOINT: http://minio:9000
+      APP_MINIO_PUBLIC_URL: /storage
       APP_JWT_SECRET: docker-dev-secret-key-change-in-production-please-make-it-long-enough-32ch
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
@@ -109,6 +110,7 @@ services:
       - "3000:80"
     depends_on:
       - backend
+      - minio
     restart: unless-stopped
 
 volumes:
