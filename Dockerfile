@@ -1,11 +1,11 @@
-FROM eclipse-temurin:21-jdk AS builder
+FROM maven:3.9-eclipse-temurin-21 AS builder
 
 WORKDIR /build
 COPY pom.xml .
 RUN mvn dependency:go-offline -q 2>/dev/null || true
 
 COPY src ./src
-RUN mvn clean package -DskipTests -Djava.version=21
+RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:21-jre
 
