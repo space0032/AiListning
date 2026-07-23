@@ -5,7 +5,7 @@ COPY pom.xml .
 RUN mvn dependency:go-offline -q 2>/dev/null || true
 
 COPY src ./src
-RUN mvn clean package -DskipTests
+RUN mvn clean package -DskipTests -Dmaven.compiler.release=21
 
 FROM eclipse-temurin:21-jre
 
